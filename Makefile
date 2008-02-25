@@ -27,11 +27,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-CC ?= gcc
+CC := gcc
+DLLTOOL := dlltool
 CFLAGS ?= -Wall -DWINVER=0x0500
 INCLUDES ?= -I./
 LIBS ?= -L./ -lwinspool -lws2_32
-DLLTOOL ?= dlltool
+
+ifdef HOST
+	CC := $(HOST)-$(CC)
+	DLLTOOL := $(HOST)-$(DLLTOOL)
+endif
 
 .PHONY: all
 all: netprinters.exe
