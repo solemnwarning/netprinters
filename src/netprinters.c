@@ -42,9 +42,23 @@
 #define IS_WHITESPACE(x) (x == ' ' || x == '\t' || x == '\r' || x == '\n')
 #define EPRINTF(...) fprintf(stderr, __VA_ARGS__)
 
+static void print_usage(void) {
+	printf("Usage: netprinters <arguments>\n");
+	printf("Arguments:\n\n");
+	
+	printf("-c <UNC path>\tConnect to a printer\n");
+	printf("-d <UNC path>\tSet default printer\n");
+	printf("-r <UNC path>\tDisconnect from a printer\n");
+	printf("-l\t\tList connected printers\n");
+	printf("-q\t\tOnly print error messages\n");
+	printf("-s <Filename>\tExecute a netprinters script\n");
+	printf("-v\t\tPrint program information\n");
+	printf("-h\t\tPrint this usage message\n");
+}
+
 int main(int argc, char** argv) {
 	if(argc < 2) {
-		EPRINTF("Usage: %s <printer list>\n", argv[0]);
+		print_usage();
 		return 1;
 	}
 	
