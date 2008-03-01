@@ -35,68 +35,12 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "compare.h"
+
 #define VERSION "v1.01"
 
 #define IS_WHITESPACE(x) (x == ' ' || x == '\t' || x == '\r' || x == '\n')
 #define EPRINTF(...) fprintf(stderr, __VA_ARGS__)
-
-int set_printer(char const* printer);
-
-/* Compare two hostnames, parsing wildcards in 'host1'
- *
- * Returns 1 on hostname match, 0 otherwise
-*/
-static int host_compare(char const* host1, char const* host2) {
-	for(;;) {
-		if(tolower(host1[0]) == tolower(host2[0])) {
-			if(host1[0] == '\0') {
-				break;
-			}
-			
-			host1++;
-			host2++;
-			continue;
-		}
-		
-		if(host1[0] == '?' && host2[0] != '\0') {
-			host1++;
-			host2++;
-			continue;
-		}
-
-		if(host1[0] == '*') {
-			if(host2[0] == '\0' || host1[1] == '\0') {
-				break;
-			}
-			if(tolower(host1[1]) == tolower(host2[0])) {
-				host1 += 2;
-			}
-			host2++;
-			continue;
-		}
-		
-		return 0;
-	}
-
-	return 1;
-}
-
-int ncasecmp(char const* a, char const* b) {
-	size_t pos = 0;
-	
-	while(1) {
-		if(tolower(a[pos]) != tolower(b[pos])) {
-			return 0;
-		}
-		if(a[pos] == '\0') {
-			break;
-		}
-		
-		pos++;
-	}
-	
-	return 1;
-}
 
 int main(int argc, char** argv) {
 	if(argc < 2) {
@@ -154,11 +98,11 @@ int main(int argc, char** argv) {
 		for(pos = strlen(printer)-1; IS_WHITESPACE(printer[pos]);) { pos--; }
 		printer[pos+1] = '\0';
 		
-		if(!host_compare(machine, hostname)) {
+		if(!str_compare(machine, hostname, STR_NOCASE | STR_WILDCARD1)) {
 			continue;
 		}
 		
-		if(ncasecmp(command, "printer")) {
+		if(str_compare(command, "printer", STR_NOCASE)) {
 			printf("Adding printer:\t\t%s\n", printer);
 			
 			if(!AddPrinterConnection(printer)) {
@@ -167,7 +111,7 @@ int main(int argc, char** argv) {
 				EPRINTF("Can't add printer %s: %d (%s)\n", printer, errnum, strerror(errnum));
 			}
 		}
-		if(ncasecmp(command, "default")) {
+		if(str_compare(command, "default", STR_NOCASE)) {
 			printf("Setting default:\t%s\n", printer);
 			
 			if(!SetDefaultPrinter(printer)) {
@@ -175,7 +119,7 @@ int main(int argc, char** argv) {
 				EPRINTF("Can't set default printer: %s\n", strerror(errnum));
 			}
 		}
-		if(ncasecmp(command, "exiton")) {
+		if(str_compare(command, "exiton", STR_NOCASE)) {
 			printf("Exiting on '%s'\n", machine);
 			return 0;
 		}
