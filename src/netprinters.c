@@ -42,6 +42,10 @@
 #define IS_WHITESPACE(x) (x == ' ' || x == '\t' || x == '\r' || x == '\n')
 #define EPRINTF(...) fprintf(stderr, __VA_ARGS__)
 
+static void print_usage(void);
+static char **get_printers(void);
+static char *win32_strerr(DWORD errnum);
+
 static void print_usage(void) {
 	printf("Usage: netprinters <arguments>\n");
 	printf("Arguments:\n\n");
@@ -54,6 +58,60 @@ static void print_usage(void) {
 	printf("-s <Filename>\tExecute a netprinters script\n");
 	printf("-v\t\tPrint program information\n");
 	printf("-h\t\tPrint this usage message\n");
+}
+
+/* Returns a NULL-terminated list of connected printers obtained from the
+ * EnumPrinters() win32 call, or NULL on error.
+*/
+static char **get_printers(void) {
+	PRINTER_INFO_4 *printers = NULL;
+	DWORD size = 0, count, n;
+	
+	while(!EnumPrinters(PRINTER_ENUM_CONNECTIONS, NULL, 4, (void*)printers, size, &size, &count)) {
+		if(GetLastError() != 122 && GetLastError() != 1784) {
+			EPRINTF("Can't fetch printers: %s\n", win32_strerr(GetLastError()));
+			goto GET_PRINTERS_END;
+		}
+		
+		free(printers);
+		if((printers = malloc(size)) == NULL) {
+			EPRINTF("Can't allocate %u bytes\n", (unsigned int)size);
+			goto GET_PRINTERS_END;
+		}
+	}
+	
+	char **retbuf = malloc(sizeof(char*) * (count+1));
+	if(!retbuf) {
+		EPRINTF("Can't allocate %d bytes\n", (int)(sizeof(char*) * (count+1)));
+		goto GET_PRINTERS_END;
+	}
+	retbuf[count] = NULL;
+	
+	for(n = 0; n < count; n++) {
+		char *pname = printers[n].pPrinterName;
+		
+		if((retbuf[n] = malloc(strlen(pname)+1)) == NULL) {
+			EPRINTF("Can't allocate %u bytes\n", (strlen(pname)+1));
+			break;
+		}
+		strcpy(retbuf[n], pname);
+	}
+	
+	GET_PRINTERS_END:
+	free(printers);
+	return retbuf;
+}
+
+/* Equvilent of the strerr() function, using windows's backwards FormatMessage
+ * API call.
+ *
+ * Returns string stored in static buffer
+*/
+static char *win32_strerr(DWORD errnum) {
+	static char buf[1024] = {'\0'};
+	
+	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errnum, 0, buf, 1023, NULL);
+	return buf;	
 }
 
 int main(int argc, char** argv) {
