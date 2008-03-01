@@ -57,8 +57,8 @@ netprinters.o: netprinters.c
 compare.o: compare.c compare.h
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o src/compare.o src/compare.c
 
-libwinspool.a: winspool.def
-	$(DLLTOOL) -d src/winspool.def -l src/libwinspool.a
+libwinspool.a: winspool.def winspool.h
+	$(DLLTOOL) -k -d src/winspool.def -l src/libwinspool.a
 
 printer.o: printer.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o src/printer.o src/printer.c
