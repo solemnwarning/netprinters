@@ -51,16 +51,17 @@ static void connect_printer(char *printer);
 static void default_printer(char *printer);
 static void disconnect_printer(char *printer);
 static void disconnect_by_expr(char *expr);
+static void print_about(void);
 
 static void print_usage(void) {
 	printf("Usage: netprinters <arguments>\n");
 	printf("Arguments:\n\n");
 	
+	printf("-a\t\tPrint 'about' message\n");
 	printf("-c <UNC path>\tConnect to a printer\n");
 	printf("-d <UNC path>\tSet default printer\n");
 	printf("-r <Expression>\tDisconnect any printers matching the expression\n");
 	printf("-l\t\tList connected printers\n");
-	printf("-q\t\tOnly print error messages\n");
 	printf("-s <Filename>\tExecute a netprinters script\n");
 }
 
@@ -188,6 +189,18 @@ static void disconnect_by_expr(char *expr) {
 	free(printers);
 }
 
+/* Print the 'about' message to stdout */
+static void print_about(void) {
+	printf("NetPrinters is free software, please share it!\n");
+	printf("Website - http://www.solemnwarning.net/netprinters/\n\n");
+	
+	printf("The release ZIP files on the website include:\n");
+	printf("\t - A compiled executable (.exe)\n");
+	printf("\t - The source code\n");
+	printf("\t - Full documentation\n");
+	printf("\t - A copy of the license\n");
+}
+
 int main(int argc, char** argv) {
 	if(argc < 2) {
 		print_usage();
@@ -199,7 +212,10 @@ int main(int argc, char** argv) {
 	
 	int argn = 1;
 	while(argn < argc) {
-		if(ARGN_IS("-c")) {
+		if(ARGN_IS("-a")) {
+			print_about();
+			return 0;
+		}else if(ARGN_IS("-c")) {
 			if((argn + 1) == argc) {
 				EPRINTF("-c requires an argument");
 				return 1;
