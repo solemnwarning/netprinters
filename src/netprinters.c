@@ -215,6 +215,7 @@ static void exec_script(char const *filename) {
 	
 	char buf[1024];
 	unsigned int lnum = 1;
+	int sblock = 0;
 	
 	while(fgets(buf, 1024, fh)) {
 		char *name = buf+strspn(buf, WHITESPACE);
@@ -227,7 +228,26 @@ static void exec_script(char const *filename) {
 			value[strcspn(value, "\r\n")] = '\0';
 		}
 		
-		printf("Line %u: '%s' = '%s'\n", lnum, name, value);
+		if(name[0] == '\0') {
+			sblock = 0;
+		}
+		if(name[0] == '#' || name[0] == '\0' || sblock) {
+			lnum++;
+			continue;
+		}
+		
+		if(str_compare(name, "AddPrinter", STR_NOCASE)) {
+			connect_printer(value);
+		}else if(str_compare(name, "DefaultPrinter", STR_NOCASE)) {
+			default_printer(value);
+		}else if(str_compare(name, "DeletePrinter", STR_NOCASE)) {
+			disconnect_by_expr(value);
+		}else{
+			EPRINTF(
+				"Unknown directive %s at line %u\n",
+				name, lnum
+			);
+		}
 		
 		lnum++;
 	}
