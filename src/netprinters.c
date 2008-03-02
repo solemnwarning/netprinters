@@ -45,6 +45,9 @@
 static void print_usage(void);
 static char **get_printers(void);
 static char *win32_strerr(DWORD errnum);
+static void list_printers(void);
+static void connect_printer(char *printer);
+static void default_printer(char *printer);
 
 static void print_usage(void) {
 	printf("Usage: netprinters <arguments>\n");
@@ -112,6 +115,41 @@ static char *win32_strerr(DWORD errnum) {
 	
 	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errnum, 0, buf, 1023, NULL);
 	return buf;	
+}
+
+/* List printers to stdout */
+static void list_printers(void) {
+	char **printers = get_printers();
+	unsigned int pnum = 0;
+	
+	while(printers[pnum]) {
+		puts(printers[pnum]);
+		free(printers[pnum]);
+		
+		pnum++;
+	}
+	
+	free(printers);
+}
+
+/* Connect to a network printer */
+static void connect_printer(char *printer) {
+	if(!AddPrinterConnection((char*)printer)) {
+		EPRINTF(
+			"Can't connect to printer %s: %s\n",
+			printer, win32_strerr(GetLastError())
+		);
+	}
+}
+
+/* Set default printer */
+static void default_printer(char *printer) {
+	if(!SetDefaultPrinter(printer)) {
+		EPRINTF(
+			"Can't make printer %s default: %s\n",
+			printer, win32_strerr(GetLastError())
+		);
+	}
 }
 
 int main(int argc, char** argv) {
