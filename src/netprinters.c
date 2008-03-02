@@ -30,6 +30,7 @@
 
 #include <windows.h>
 #include <winsock2.h>
+#include <lm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,6 +53,13 @@ static void default_printer(char *printer);
 static void disconnect_printer(char *printer);
 static void disconnect_by_expr(char *expr);
 static void print_about(void);
+
+static struct {
+	char *username;
+	char *nbname;
+	
+	char **groups;
+} userenv = {NULL,NULL,NULL};
 
 static void print_usage(void) {
 	printf("Usage: netprinters <arguments>\n");
@@ -203,14 +211,6 @@ static void print_about(void) {
 
 /* Parse and execute a NetPrinters script */
 static void exec_script(char const *filename) {
-	char nbname[1024];
-	DWORD bsize = 1023;
-	GetComputerName(nbname, &bsize);
-	
-	bsize = 1023;
-	char username[1024];
-	GetUserName(username, &bsize);
-	
 	FILE *fh = fopen(filename, "r");
 	if(!fh) {
 		EPRINTF(
@@ -250,19 +250,19 @@ static void exec_script(char const *filename) {
 		}else if(str_compare(name, "DeletePrinter", STR_NOCASE)) {
 			disconnect_by_expr(value);
 		}else if(str_compare(name, "NetBIOS", STR_NOCASE)) {
-			if(!str_compare(value, nbname, STR_NOCASE | STR_WILDCARD1)) {
+			if(!str_compare(value, userenv.nbname, STR_NOCASE | STR_WILDCARD1)) {
 				sblock = 1;
 			}
 		}else if(str_compare(name, "!NetBIOS", STR_NOCASE)) {
-			if(str_compare(value, nbname, STR_NOCASE | STR_WILDCARD1)) {
+			if(str_compare(value, userenv.nbname, STR_NOCASE | STR_WILDCARD1)) {
 				sblock = 1;
 			}
 		}else if(str_compare(name, "Username", STR_NOCASE)) {
-			if(!str_compare(value, username, STR_NOCASE | STR_WILDCARD1)) {
+			if(!str_compare(value, userenv.username, STR_NOCASE | STR_WILDCARD1)) {
 				sblock = 1;
 			}
 		}else if(str_compare(name, "!Username", STR_NOCASE)) {
-			if(str_compare(value, username, STR_NOCASE | STR_WILDCARD1)) {
+			if(str_compare(value, userenv.username, STR_NOCASE | STR_WILDCARD1)) {
 				sblock = 1;
 			}
 		}else{
@@ -283,6 +283,60 @@ static void exec_script(char const *filename) {
 	}
 }
 
+/* Read the environment information into the userenv structure */
+static void load_env(void) {
+	DWORD bsize, count, tcount, n;
+	unsigned int s;
+	
+	bsize = 1023;
+	GetComputerName(userenv.nbname, &bsize);
+	
+	bsize = 1023;
+	GetUserName(userenv.username, &bsize);
+	
+	GROUP_USERS_INFO_0 *groups = NULL;
+	NET_API_STATUS rval = NetUserGetGroups(
+		NULL,
+		(LPCWSTR)userenv.username,
+		0,
+		(LPBYTE*)&groups,
+		MAX_PREFERRED_LENGTH,
+		&count,
+		&tcount
+	);
+	if(rval != NERR_Success) {
+		EPRINTF(
+			"Can't get group information: %s\n",
+			win32_strerr(rval)
+		);
+		
+		exit(1);
+	}
+	
+	if((userenv.groups = malloc(sizeof(char*) * (count+1))) == NULL) {
+		EPRINTF(
+			"Can't allocate %u bytes\n",
+			(unsigned int)(sizeof(char*) * (count+1))
+		);
+		
+		exit(1);
+	}
+	userenv.groups[count] = NULL;
+	
+	for(n = 0; n < count; n++) {
+		s = strlen((char*)groups[n].grui0_name)+1;
+		if((userenv.groups[n] = malloc(s)) == NULL) {
+			EPRINTF("Can't allocate %u bytes\n", s);
+			
+			exit(1);
+		}
+		
+		strcpy(userenv.groups[n], (char*)groups[n].grui0_name);
+	}
+	
+	NetApiBufferFree(groups);
+}
+
 int main(int argc, char** argv) {
 	if(argc < 2) {
 		print_usage();
@@ -296,6 +350,8 @@ int main(int argc, char** argv) {
 		EPRINTF("This program requires Windows 2000 or newer\n");
 		return 1;
 	}
+	
+	load_env();
 	
 	int argn = 1;
 	while(argn < argc) {
