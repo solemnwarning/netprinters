@@ -37,10 +37,11 @@
 
 #include "compare.h"
 
-#define VERSION "v1.01"
+#define VERSION "v2.0"
 
 #define IS_WHITESPACE(x) (x == ' ' || x == '\t' || x == '\r' || x == '\n')
 #define EPRINTF(...) fprintf(stderr, __VA_ARGS__)
+#define ARGN_IS(arg) str_compare(argv[argn], arg, 0)
 
 static void print_usage(void);
 static char **get_printers(void);
@@ -114,6 +115,7 @@ static char *win32_strerr(DWORD errnum) {
 	static char buf[1024] = {'\0'};
 	
 	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errnum, 0, buf, 1023, NULL);
+	buf[strcspn(buf, "\r\n")] = '\0';
 	return buf;	
 }
 
@@ -134,7 +136,9 @@ static void list_printers(void) {
 
 /* Connect to a network printer */
 static void connect_printer(char *printer) {
-	if(!AddPrinterConnection((char*)printer)) {
+	if(AddPrinterConnection((char*)printer)) {
+		printf("Added printer:\t\t%s\n", printer);
+	}else{
 		EPRINTF(
 			"Can't connect to printer %s: %s\n",
 			printer, win32_strerr(GetLastError())
@@ -145,6 +149,8 @@ static void connect_printer(char *printer) {
 /* Set default printer */
 static void default_printer(char *printer) {
 	if(!SetDefaultPrinter(printer)) {
+		printf("Set default printer:\t%s\n", printer);
+	}else{
 		EPRINTF(
 			"Can't make printer %s default: %s\n",
 			printer, win32_strerr(GetLastError())
@@ -158,9 +164,34 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	
-	printf("Network printer setup utility " VERSION "\n");
-	printf("By Daniel Collins\n\n");
+	printf("NetPrinters " VERSION "\n");
+	printf("Copyright (C) 2008 Daniel Collins\n\n");
 	
+	int argn = 1;
+	while(argn < argc) {
+		if(ARGN_IS("-c")) {
+			if((argn + 1) == argc) {
+				EPRINTF("-c requires an argument");
+				return 1;
+			}
+			
+			connect_printer(argv[++argn]);
+		}else if(ARGN_IS("-d")) {
+			if((argn + 1) == argc) {
+				EPRINTF("-d requires an argument");
+				return 1;
+			}
+			
+			default_printer(argv[++argn]);
+		}else if(ARGN_IS("-l")) {
+			list_printers();
+			return 0;
+		}
+		
+		argn++;
+	}
+	
+	#if 0
 	WSADATA wsaData;
 	if(WSAStartup(MAKEWORD(1, 1), &wsaData) != 0) {
 		EPRINTF("Can't init Winsock!\n");
@@ -245,6 +276,7 @@ int main(int argc, char** argv) {
 	}
 	
 	printf("\n");
+	#endif
 	
 	return 0;
 }
