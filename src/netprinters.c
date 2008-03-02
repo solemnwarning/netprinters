@@ -86,6 +86,7 @@ static void print_usage(void) {
 static char **get_printers(void) {
 	PRINTER_INFO_4 *printers = NULL;
 	DWORD size = 0, count, n;
+	char **retbuf = NULL;
 	
 	while(!EnumPrinters(PRINTER_ENUM_CONNECTIONS, NULL, 4, (void*)printers, size, &size, &count)) {
 		if(GetLastError() != 122 && GetLastError() != 1784) {
@@ -100,8 +101,7 @@ static char **get_printers(void) {
 		}
 	}
 	
-	char **retbuf = malloc(sizeof(char*) * (count+1));
-	if(!retbuf) {
+	if(!(retbuf = malloc(sizeof(char*) * (count+1)))) {
 		EPRINTF("Can't allocate %d bytes\n", (int)(sizeof(char*) * (count+1)));
 		goto GET_PRINTERS_END;
 	}
