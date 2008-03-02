@@ -203,6 +203,14 @@ static void print_about(void) {
 
 /* Parse and execute a NetPrinters script */
 static void exec_script(char const *filename) {
+	char nbname[1024];
+	DWORD bsize = 1023;
+	GetComputerName(nbname, &bsize);
+	
+	bsize = 1023;
+	char username[1024];
+	GetUserName(username, &bsize);
+	
 	FILE *fh = fopen(filename, "r");
 	if(!fh) {
 		EPRINTF(
@@ -241,6 +249,22 @@ static void exec_script(char const *filename) {
 			default_printer(value);
 		}else if(str_compare(name, "DeletePrinter", STR_NOCASE)) {
 			disconnect_by_expr(value);
+		}else if(str_compare(name, "NetBIOS", STR_NOCASE)) {
+			if(!str_compare(value, nbname, STR_NOCASE | STR_WILDCARD1)) {
+				sblock = 1;
+			}
+		}else if(str_compare(name, "!NetBIOS", STR_NOCASE)) {
+			if(str_compare(value, nbname, STR_NOCASE | STR_WILDCARD1)) {
+				sblock = 1;
+			}
+		}else if(str_compare(name, "Username", STR_NOCASE)) {
+			if(!str_compare(value, username, STR_NOCASE | STR_WILDCARD1)) {
+				sblock = 1;
+			}
+		}else if(str_compare(name, "!Username", STR_NOCASE)) {
+			if(str_compare(value, username, STR_NOCASE | STR_WILDCARD1)) {
+				sblock = 1;
+			}
 		}else{
 			EPRINTF(
 				"Unknown directive %s at line %u\n",
