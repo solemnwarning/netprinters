@@ -49,6 +49,8 @@ static char *win32_strerr(DWORD errnum);
 static void list_printers(void);
 static void connect_printer(char *printer);
 static void default_printer(char *printer);
+static void disconnect_printer(char *printer);
+static void disconnect_by_expr(char *expr);
 
 static void print_usage(void) {
 	printf("Usage: netprinters <arguments>\n");
@@ -56,12 +58,10 @@ static void print_usage(void) {
 	
 	printf("-c <UNC path>\tConnect to a printer\n");
 	printf("-d <UNC path>\tSet default printer\n");
-	printf("-r <UNC path>\tDisconnect from a printer\n");
+	printf("-r <Expression>\tDisconnect any printers matching the expression\n");
 	printf("-l\t\tList connected printers\n");
 	printf("-q\t\tOnly print error messages\n");
 	printf("-s <Filename>\tExecute a netprinters script\n");
-	printf("-v\t\tPrint program information\n");
-	printf("-h\t\tPrint this usage message\n");
 }
 
 /* Returns a NULL-terminated list of connected printers obtained from the
@@ -148,7 +148,7 @@ static void connect_printer(char *printer) {
 
 /* Set default printer */
 static void default_printer(char *printer) {
-	if(!SetDefaultPrinter(printer)) {
+	if(SetDefaultPrinter(printer)) {
 		printf("Set default printer:\t%s\n", printer);
 	}else{
 		EPRINTF(
@@ -156,6 +156,36 @@ static void default_printer(char *printer) {
 			printer, win32_strerr(GetLastError())
 		);
 	}
+}
+
+/* Disconnect from a printer */
+static void disconnect_printer(char *printer) {
+	if(DeletePrinterConnection(printer)) {
+		printf("Disconnected from:\t%s\n", printer);
+	}else{
+		EPRINTF(
+			"Can't disconnect from printer %s: %s\n",
+			printer, win32_strerr(GetLastError())
+		);
+	}
+}
+
+/* Disconnect from any printers matching the supplied expression */
+static void disconnect_by_expr(char *expr) {
+	char **printers = get_printers();
+	unsigned int pnum = 0;
+	
+	while(printers[pnum]) {
+		char *pname = printers[pnum++];
+		
+		if(str_compare(pname, expr, STR_NOCASE | STR_WILDCARD2)) {
+			disconnect_printer(pname);
+		}
+		
+		free(pname);
+	}
+	
+	free(printers);
 }
 
 int main(int argc, char** argv) {
@@ -183,6 +213,13 @@ int main(int argc, char** argv) {
 			}
 			
 			default_printer(argv[++argn]);
+		}else if(ARGN_IS("-r")) {
+			if((argn + 1) == argc) {
+				EPRINTF("-r requires an argument");
+				return 1;
+			}
+			
+			disconnect_by_expr(argv[++argn]);
 		}else if(ARGN_IS("-l")) {
 			list_printers();
 			return 0;
