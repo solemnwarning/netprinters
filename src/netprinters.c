@@ -224,7 +224,7 @@ static void exec_script(char const *filename) {
 			value[0] = '\0';
 			value++;
 			value += strspn(value, WHITESPACE);
-			value[strcspn(value, WHITESPACE)] = '\0';
+			value[strcspn(value, "\r\n")] = '\0';
 		}
 		
 		printf("Line %u: '%s' = '%s'\n", lnum, name, value);
