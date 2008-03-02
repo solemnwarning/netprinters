@@ -31,6 +31,7 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <lm.h>
+#include <security.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,6 +44,8 @@
 
 #define EPRINTF(...) fprintf(stderr, __VA_ARGS__)
 #define ARGN_IS(arg) str_compare(argv[argn], arg, 0)
+#define fprintf(fh, ...) fprintf(fh, __VA_ARGS__); fflush(fh);
+#define printf(...) printf(__VA_ARGS__); fflush(stdout);
 
 static void print_usage(void);
 static char **get_printers(void);
@@ -53,19 +56,23 @@ static void default_printer(char *printer);
 static void disconnect_printer(char *printer);
 static void disconnect_by_expr(char *expr);
 static void print_about(void);
+static void exec_script(char const *filename);
+static void load_env(void);
+static void print_env(void);
 
 static struct {
-	char *username;
-	char *nbname;
+	char username[1024];
+	char nbname[1024];
 	
 	char **groups;
-} userenv = {NULL,NULL,NULL};
+} userenv = {{'\0'},{'\0'},NULL};
 
 static void print_usage(void) {
 	printf("Usage: netprinters <arguments>\n");
 	printf("Arguments:\n\n");
 	
 	printf("-a\t\tPrint 'about' message\n");
+	printf("-e\t\tDisplay environment information\n");
 	printf("-c <UNC path>\tConnect to a printer\n");
 	printf("-d <UNC path>\tSet default printer\n");
 	printf("-r <Expression>\tDisconnect any printers matching the expression\n");
@@ -285,15 +292,15 @@ static void exec_script(char const *filename) {
 
 /* Read the environment information into the userenv structure */
 static void load_env(void) {
-	DWORD bsize, count, tcount, n;
+	DWORD bsize, count = 0, tcount, n;
 	unsigned int s;
 	
-	bsize = 1023;
+	bsize = sizeof(userenv.nbname)-1;
 	GetComputerName(userenv.nbname, &bsize);
 	
-	bsize = 1023;
-	GetUserName(userenv.username, &bsize);
-	
+	bsize = sizeof(userenv.username)-1;
+	GetUserNameEx(NameSamCompatible, userenv.username, &bsize);
+		
 	GROUP_USERS_INFO_0 *groups = NULL;
 	NET_API_STATUS rval = NetUserGetGroups(
 		NULL,
@@ -309,8 +316,6 @@ static void load_env(void) {
 			"Can't get group information: %s\n",
 			win32_strerr(rval)
 		);
-		
-		exit(1);
 	}
 	
 	if((userenv.groups = malloc(sizeof(char*) * (count+1))) == NULL) {
@@ -327,14 +332,25 @@ static void load_env(void) {
 		s = strlen((char*)groups[n].grui0_name)+1;
 		if((userenv.groups[n] = malloc(s)) == NULL) {
 			EPRINTF("Can't allocate %u bytes\n", s);
-			
-			exit(1);
+			break;
 		}
 		
 		strcpy(userenv.groups[n], (char*)groups[n].grui0_name);
 	}
 	
 	NetApiBufferFree(groups);
+}
+
+/* Print environment information to stdout */
+static void print_env(void) {
+	printf("NetBIOS name:\t%s\n", userenv.nbname);
+	printf("Username:\t%s\n", userenv.username);
+	printf("Groups:\n\n");
+	
+	unsigned int n = 0;
+	while(userenv.groups[n]) {
+		puts(userenv.groups[n++]);
+	}
 }
 
 int main(int argc, char** argv) {
@@ -357,6 +373,9 @@ int main(int argc, char** argv) {
 	while(argn < argc) {
 		if(ARGN_IS("-a")) {
 			print_about();
+			return 0;
+		}else if(ARGN_IS("-e")) {
+			print_env();
 			return 0;
 		}else if(ARGN_IS("-c")) {
 			if((argn + 1) == argc) {
