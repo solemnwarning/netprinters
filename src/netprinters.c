@@ -40,7 +40,6 @@
 #define VERSION "v2.0"
 #define WHITESPACE "\r\n\t "
 
-#define IS_WHITESPACE(x) (x == ' ' || x == '\t' || x == '\r' || x == '\n')
 #define EPRINTF(...) fprintf(stderr, __VA_ARGS__)
 #define ARGN_IS(arg) str_compare(argv[argn], arg, 0)
 
@@ -268,6 +267,11 @@ int main(int argc, char** argv) {
 	
 	printf("NetPrinters " VERSION "\n");
 	printf("Copyright (C) 2008 Daniel Collins\n\n");
+	
+    	if(LOBYTE(LOWORD(GetVersion())) < 5) {
+		EPRINTF("This program requires Windows 2000 or newer\n");
+		return 1;
+	}
 	
 	int argn = 1;
 	while(argn < argc) {
