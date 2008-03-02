@@ -48,7 +48,7 @@ clean:
 	rm -f src/libwinspool.a
 	rm -f netprinters.exe
 
-netprinters.exe: libwinspool.a netprinters.o printer.o compare.o
+netprinters.exe: libwinspool.a netprinters.o compare.o
 	$(CC) $(CFLAGS) -o netprinters.exe src/netprinters.o src/compare.o $(LIBS)
 
 netprinters.o: netprinters.c
@@ -59,6 +59,3 @@ compare.o: compare.c compare.h
 
 libwinspool.a: winspool.def winspool.h
 	$(DLLTOOL) -k -d src/winspool.def -l src/libwinspool.a
-
-printer.o: printer.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o src/printer.o src/printer.c
