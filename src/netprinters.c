@@ -38,6 +38,7 @@
 #include "compare.h"
 
 #define VERSION "v2.0"
+#define WHITESPACE "\r\n\t "
 
 #define IS_WHITESPACE(x) (x == ' ' || x == '\t' || x == '\r' || x == '\n')
 #define EPRINTF(...) fprintf(stderr, __VA_ARGS__)
@@ -201,6 +202,44 @@ static void print_about(void) {
 	printf("\t - A copy of the license\n");
 }
 
+/* Parse and execute a NetPrinters script */
+static void exec_script(char const *filename) {
+	FILE *fh = fopen(filename, "r");
+	if(!fh) {
+		EPRINTF(
+			"Can't open script %s: %s\n", filename,
+			win32_strerr(GetLastError())
+		);
+		return;
+	}
+	
+	char buf[1024];
+	unsigned int lnum = 1;
+	
+	while(fgets(buf, 1024, fh)) {
+		char *name = buf+strspn(buf, WHITESPACE);
+		char *value = name+strcspn(name, WHITESPACE);
+		
+		if(value[0] != '\0') {
+			value[0] = '\0';
+			value++;
+			value += strspn(value, WHITESPACE);
+			value[strcspn(value, WHITESPACE)] = '\0';
+		}
+		
+		printf("Line %u: '%s' = '%s'\n", lnum, name, value);
+		
+		lnum++;
+	}
+	
+	if(fclose(fh) != 0) {
+		EPRINTF(
+			"Can't close script %s: %s\n", filename,
+			win32_strerr(GetLastError())
+		);
+	}
+}
+
 int main(int argc, char** argv) {
 	if(argc < 2) {
 		print_usage();
@@ -239,6 +278,16 @@ int main(int argc, char** argv) {
 		}else if(ARGN_IS("-l")) {
 			list_printers();
 			return 0;
+		}else if(ARGN_IS("-s")) {
+			if((argn + 1) == argc) {
+				EPRINTF("-s requires an argument");
+				return 1;
+			}
+			
+			exec_script(argv[++argn]);
+		}else{
+			EPRINTF("Unknown argument: %s\n", argv[argn]);
+			return 1;
 		}
 		
 		argn++;
