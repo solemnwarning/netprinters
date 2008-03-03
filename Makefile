@@ -32,7 +32,6 @@ DLLTOOL := dlltool
 CFLAGS ?= -Wall -DWINVER=0x0500
 INCLUDES ?= -I./src/
 LIBS ?= -L./src/ -lwinspool -lws2_32 -lnetapi32 -lsecur32
-VPATH := ./src/
 
 ifdef HOST
 	CC := $(HOST)-$(CC)
@@ -48,14 +47,14 @@ clean:
 	rm -f src/libwinspool.a
 	rm -f netprinters.exe
 
-netprinters.exe: libwinspool.a netprinters.o compare.o
+netprinters.exe: src/libwinspool.a src/netprinters.o src/compare.o
 	$(CC) $(CFLAGS) -o netprinters.exe src/netprinters.o src/compare.o $(LIBS)
 
-netprinters.o: netprinters.c
+src/netprinters.o: src/netprinters.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o src/netprinters.o src/netprinters.c
 
-compare.o: compare.c compare.h
+src/compare.o: src/compare.c src/compare.h
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o src/compare.o src/compare.c
 
-libwinspool.a: winspool.def winspool.h
+src/libwinspool.a: src/winspool.def src/winspool.h
 	$(DLLTOOL) -k -d src/winspool.def -l src/libwinspool.a

@@ -63,9 +63,7 @@ static void print_env(void);
 static struct {
 	char username[1024];
 	char nbname[1024];
-	
-	char **groups;
-} userenv = {{'\0'},{'\0'},NULL};
+} userenv = {{'\0'},{'\0'}};
 
 static void print_usage(void) {
 	printf("Usage: netprinters <arguments>\n");
@@ -292,65 +290,19 @@ static void exec_script(char const *filename) {
 
 /* Read the environment information into the userenv structure */
 static void load_env(void) {
-	DWORD bsize, count = 0, tcount, n;
-	unsigned int s;
+	DWORD bsize;
 	
 	bsize = sizeof(userenv.nbname)-1;
 	GetComputerName(userenv.nbname, &bsize);
 	
 	bsize = sizeof(userenv.username)-1;
-	GetUserNameEx(NameSamCompatible, userenv.username, &bsize);
-		
-	GROUP_USERS_INFO_0 *groups = NULL;
-	NET_API_STATUS rval = NetUserGetGroups(
-		NULL,
-		(LPCWSTR)userenv.username,
-		0,
-		(LPBYTE*)&groups,
-		MAX_PREFERRED_LENGTH,
-		&count,
-		&tcount
-	);
-	if(rval != NERR_Success) {
-		EPRINTF(
-			"Can't get group information: %s\n",
-			win32_strerr(rval)
-		);
-	}
-	
-	if((userenv.groups = malloc(sizeof(char*) * (count+1))) == NULL) {
-		EPRINTF(
-			"Can't allocate %u bytes\n",
-			(unsigned int)(sizeof(char*) * (count+1))
-		);
-		
-		exit(1);
-	}
-	userenv.groups[count] = NULL;
-	
-	for(n = 0; n < count; n++) {
-		s = strlen((char*)groups[n].grui0_name)+1;
-		if((userenv.groups[n] = malloc(s)) == NULL) {
-			EPRINTF("Can't allocate %u bytes\n", s);
-			break;
-		}
-		
-		strcpy(userenv.groups[n], (char*)groups[n].grui0_name);
-	}
-	
-	NetApiBufferFree(groups);
+	GetUserName(userenv.username, &bsize);
 }
 
 /* Print environment information to stdout */
 static void print_env(void) {
 	printf("NetBIOS name:\t%s\n", userenv.nbname);
 	printf("Username:\t%s\n", userenv.username);
-	printf("Groups:\n\n");
-	
-	unsigned int n = 0;
-	while(userenv.groups[n]) {
-		puts(userenv.groups[n++]);
-	}
 }
 
 int main(int argc, char** argv) {
