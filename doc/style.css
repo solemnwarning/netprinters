@@ -1,6 +1,9 @@
 body {
 	padding: 0px;
 	margin: 5px;
+	
+	background-color: white;
+	color: black;
 }
 
 h1 {
@@ -9,4 +12,13 @@ h1 {
 
 li {
 	padding: 5px;
+}
+
+a {
+	color: blue;
+	text-decoration: underline;
+}
+
+a:hover {
+	color: red;
 }
