@@ -8,7 +8,7 @@
 <link rel="StyleSheet" type="text/css" href="style.css">
 </head>
 
-<body>
+<p>
 <h1>NetPrinters</h1>
 <p>
 NetPrinters is a utility for managing networked printer connections on Windows
@@ -17,6 +17,7 @@ command line, or in a NetPrinters script which allows setting up printers based
 on filters such as username and hostname.
 </p>
 <hr>
+
 <h1>Command line options</h1>
 <ul>
 <li>-a<br>
@@ -39,6 +40,59 @@ List connected printers.
 </li>
 <li>-s <i>Filename</i><br>
 Execute a NetPrinters script.
+</li>
+</ul>
+<hr>
+
+<h1>Script format</h1>
+<p>
+NetPrinters scripts are made from "blocks" of code, blocks of code contain
+control and filter directives, the control directives of a block are executed
+in order until a filter statement that evaluates false is encountered, then the
+rest of the block is skipped.
+</p>
+<p>
+Blocks of code are seperated by one or more blank lines, lines beginning with a
+hash (#) symbol are ignored as comments, but they will not act as block
+seperators.
+</p>
+<hr>
+
+<h1>Control directives</h1>
+<ul>
+<li>AddPrinter <i>\\SERVER\PrinterName</i><br>
+Add printer connection to an SMB printer.
+</li>
+<li>DefaultPrinter <i>\\SERVER\PrinterName</i><br>
+Set default printer to specified SMB printer.
+</li>
+<li>DeletePrinter <i>\\SERVER\PrinterName</i><br>
+Delete any printer connections matching the supplied expression, the printer
+expression may make use of the * and ? wildcards to represent zero or more of
+any character, or any one character respectively.
+</li>
+</ul>
+<hr>
+
+<h1>Filter directives</h1>
+<ul>
+<li>NetBIOS <i>NetBIOS name</i><br>
+Evaluates true if the system NetBIOS name matches the supplied NetBIOS name,
+the supplied name may use the * and ? wildcards, which have the same effect as
+documented in DeletePrinter.
+</li>
+<li>!NetBIOS <i>NetBIOS name</i><br>
+Evaluates true is the system NetBIOS name does NOT match the supplied NetBIOS
+name, basically the opposite of the NetBIOS directive. May also use the * and ?
+wildcards like NetBIOS can.
+</li>
+<li>Username <i>Username expression</i><br>
+Evaluates true if the current username matches the supplied username expression,
+the supplied username expression may use the * and ? wildcards.
+</li>
+<li>!Username <i>Username expression</i><br>
+Evaluates true if the current username does NOT match the supplied username
+expression, the supplied username expression may use the * and ? wildcards.
 </li>
 </ul>
 </body>
