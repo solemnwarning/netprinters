@@ -31,7 +31,7 @@ CC := gcc
 DLLTOOL := dlltool
 CFLAGS ?= -Wall -DWINVER=0x0500
 INCLUDES ?= -I./src/
-LIBS ?= -L./src/ -lwinspool -lws2_32 -lnetapi32 -lsecur32
+LIBS ?= -L./src/ -lwinspool -lws2_32
 
 ifdef HOST
 	CC := $(HOST)-$(CC)
