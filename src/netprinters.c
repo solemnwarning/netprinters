@@ -37,13 +37,11 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "compare.h"
-
-#define VERSION "v2.0"
+#define VERSION "v2.1"
 #define WHITESPACE "\r\n\t "
 
 #define EPRINTF(...) fprintf(stderr, __VA_ARGS__)
-#define ARGN_IS(arg) str_compare(argv[argn], arg, 0)
+#define ARGN_IS(arg) (strcmp(argv[argn], arg) == 0)
 #define fprintf(fh, ...) fprintf(fh, __VA_ARGS__); fflush(fh);
 #define printf(...) printf(__VA_ARGS__); fflush(stdout);
 
@@ -59,6 +57,7 @@ static void print_about(void);
 static void exec_script(char const *filename);
 static void load_env(void);
 static void print_env(void);
+static int expr_compare(char const *str, char const *expr);
 
 static struct {
 	char username[1024];
@@ -192,7 +191,7 @@ static void disconnect_by_expr(char *expr) {
 	while(printers[pnum]) {
 		char *pname = printers[pnum++];
 		
-		if(str_compare(pname, expr, STR_NOCASE | STR_WILDCARD2)) {
+		if(expr_compare(pname, expr)) {
 			disconnect_printer(pname);
 		}
 		
@@ -248,26 +247,26 @@ static void exec_script(char const *filename) {
 			continue;
 		}
 		
-		if(str_compare(name, "AddPrinter", STR_NOCASE)) {
+		if(expr_compare(name, "AddPrinter")) {
 			connect_printer(value);
-		}else if(str_compare(name, "DefaultPrinter", STR_NOCASE)) {
+		}else if(expr_compare(name, "DefaultPrinter")) {
 			default_printer(value);
-		}else if(str_compare(name, "DeletePrinter", STR_NOCASE)) {
+		}else if(expr_compare(name, "DeletePrinter")) {
 			disconnect_by_expr(value);
-		}else if(str_compare(name, "NetBIOS", STR_NOCASE)) {
-			if(!str_compare(value, userenv.nbname, STR_NOCASE | STR_WILDCARD1)) {
+		}else if(expr_compare(name, "NetBIOS")) {
+			if(!expr_compare(userenv.nbname, value)) {
 				sblock = 1;
 			}
-		}else if(str_compare(name, "!NetBIOS", STR_NOCASE)) {
-			if(str_compare(value, userenv.nbname, STR_NOCASE | STR_WILDCARD1)) {
+		}else if(expr_compare(name, "!NetBIOS")) {
+			if(expr_compare(userenv.nbname, value)) {
 				sblock = 1;
 			}
-		}else if(str_compare(name, "Username", STR_NOCASE)) {
-			if(!str_compare(value, userenv.username, STR_NOCASE | STR_WILDCARD1)) {
+		}else if(expr_compare(name, "Username")) {
+			if(!expr_compare(userenv.username, value)) {
 				sblock = 1;
 			}
-		}else if(str_compare(name, "!Username", STR_NOCASE)) {
-			if(str_compare(value, userenv.username, STR_NOCASE | STR_WILDCARD1)) {
+		}else if(expr_compare(name, "!Username")) {
+			if(expr_compare(userenv.username, value)) {
 				sblock = 1;
 			}
 		}else{
@@ -303,6 +302,55 @@ static void load_env(void) {
 static void print_env(void) {
 	printf("NetBIOS name:\t%s\n", userenv.nbname);
 	printf("Username:\t%s\n", userenv.username);
+}
+
+/* Compare the supplied string and expression
+ * Returns 1 upon match, zero otherwise.
+*/
+static int expr_compare(char const *str, char const *expr) {
+	while(1) {
+		if(expr[0] == '\0' && str[0] != '\0') {
+			return 0;
+		}
+		if(str[0] == '\0') {
+			if(expr[0] == '\0' || expr[0] == '*') {
+				break;
+			}
+			
+			return 0;
+		}
+		
+		if(expr[0] == '*') {
+			if(expr[1] == str[0]) {
+				expr += 2;
+			}
+			str++;
+			
+			continue;
+		}
+		if(expr[0] == '?' && str[0] != '\0') {
+			expr++;
+			str++;
+			
+			continue;
+		}
+		if(expr[0] == '#' && isdigit(str[0])) {
+			expr++;
+			str++;
+			
+			continue;
+		}
+		if(tolower(expr[0]) == tolower(str[0])) {
+			expr++;
+			str++;
+			
+			continue;
+		}
+		
+		return 0;
+	}
+	
+	return 1;
 }
 
 int main(int argc, char** argv) {
