@@ -1,0 +1,8 @@
+NetPrinters changelog
+
+Version 2.1:
+	Wrote new expression comparing function with support for a '#' wildcard
+	which is the same as '?', except it only matches integers.
+
+Version 2.0:
+	Full rewrite of v1.x
