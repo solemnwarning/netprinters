@@ -63,16 +63,14 @@ static struct {
 } userenv = {{'\0'},{'\0'}};
 
 static void print_usage(void) {
-	printf("Usage: netprinters <arguments>\n");
+	printf("Usage: netprinters.exe <arguments>\n");
 	printf("Arguments:\n\n");
 	
-	printf("-a\t\tPrint 'about' message\n");
-	printf("-e\t\tDisplay environment information\n");
 	printf("-c <UNC path>\tConnect to a printer\n");
 	printf("-d <UNC path>\tSet default printer\n");
-	printf("-r <Expression>\tDisconnect any printers matching the expression\n");
+	printf("-r <expression>\tDelete any matching printer connections\n");
 	printf("-l\t\tList connected printers\n");
-	printf("-s <Filename>\tExecute a netprinters script\n");
+	printf("-s <filename>\tExecute a netprinters script\n");
 }
 
 /* Returns a NULL-terminated list of connected printers obtained from the
