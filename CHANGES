@@ -3,6 +3,11 @@ NetPrinters changelog
 Version 2.1:
 	Wrote new expression comparing function with support for a '#' wildcard
 	which is the same as '?', except it only matches integers.
+	
+	Removed -a argument because it didn't have any useful information.
+	Removed -e argument because it was only there for debugging anyway.
+	
+	Wrote ncase_match() function for case-insensitive string comparisons.
 
 Version 2.0:
 	Full rewrite of v1.x
