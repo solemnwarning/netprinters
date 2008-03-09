@@ -1,4 +1,4 @@
 TODO for NetPrinters:
 
 - Implement filter directives to work on group memberships
-- Update documentation/messages
+- Update printf()/EPRINTF() code?

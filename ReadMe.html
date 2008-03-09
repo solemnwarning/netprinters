@@ -115,12 +115,16 @@ function, but it also has support for several wildcard characters:
 NetPrinters scripts are made from "blocks" of code, blocks of code contain
 control and filter directives, the control directives of a block are executed
 in order until a filter statement that evaluates false is encountered, then the
-rest of the block is skipped.
+rest of the block is skipped. Blocks of code are seperated by one or more blank
+lines, lines beginning with a # symbol are ignored as comments, but they will
+not act as block seperators.
 </p>
 <p>
-Blocks of code are seperated by one or more blank lines, lines beginning with a
-hash (#) symbol are ignored as comments, but they will not act as block
-seperators.
+Scripts may have UNIX, Windows or even Macintosh line endings as newline and
+return-carridge characters are stripped from the beginning and end of every
+line. Whitespace is also stripped from the beginning of the line and after the
+directive name, so you can have any number of spaces or tabs at the start of a
+line, or between the directive name and it's argument(s).
 </p>
 
 <h2 id="script_2">Command directives</h2>
