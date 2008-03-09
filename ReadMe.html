@@ -34,8 +34,12 @@ a:hover {
 	color: red;
 }
 
-.pli li {
+li {
 	margin-bottom: 5px;
+}
+
+#contents li {
+	margin: 0px;
 }
 </style>
 </head>
@@ -56,7 +60,7 @@ allows setting up printers based on filters such as username and NetBIOS name.
 </p>
 <hr>
 <h1>Contents</h1>
-<ul>
+<ul id="contents">
 <li><a href="#usage">Usage</a></li>
 <li><a href="#expr">Expressions</a></li>
 <li><a href="#script_0">Scripts</a>
@@ -77,13 +81,13 @@ Add printer connection to specified SMB printer.
 <li>-d <i>\\SERVER\PrinterName</i><br>
 Set default printer to specified SMB printer.
 </li>
-<li>-r <i>Expression</i><br>
-Remove all printer connections matching the supplied expression.
+<li>-r <i>expression</i><br>
+Delete any printer connections with UNC paths matching the supplied expression.
 </li>
 <li>-l<br>
 List connected printers.
 </li>
-<li>-s <i>Filename</i><br>
+<li>-s <i>filename</i><br>
 Execute a NetPrinters script.
 </li>
 </ul>
@@ -117,7 +121,7 @@ seperators.
 </p>
 
 <h2 id="script_2">Command directives</h2>
-<ul class="pli">
+<ul>
 <li>AddPrinter <i>\\SERVER\PrinterName</i><br>
 Add printer connection to an SMB printer.
 </li>
@@ -130,7 +134,7 @@ Delete any printer connections with UNC paths matching the supplied expression.
 </ul>
 
 <h2 id="script_3">Filter directives</h2>
-<ul class="pli">
+<ul>
 <li>NetBIOS <i>expression</i><br>
 Evaluates true if the system NetBIOS name matches the supplied expression.
 </li>
