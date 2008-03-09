@@ -56,6 +56,7 @@ static void disconnect_by_expr(char *expr);
 static void exec_script(char const *filename);
 static void load_env(void);
 static int expr_compare(char const *str, char const *expr);
+static int ncase_match(char const *str1, char const *str2);
 
 static struct {
 	char username[1024];
@@ -231,25 +232,25 @@ static void exec_script(char const *filename) {
 			continue;
 		}
 		
-		if(expr_compare(name, "AddPrinter")) {
+		if(ncase_match(name, "AddPrinter")) {
 			connect_printer(value);
-		}else if(expr_compare(name, "DefaultPrinter")) {
+		}else if(ncase_match(name, "DefaultPrinter")) {
 			default_printer(value);
-		}else if(expr_compare(name, "DeletePrinter")) {
+		}else if(ncase_match(name, "DeletePrinter")) {
 			disconnect_by_expr(value);
-		}else if(expr_compare(name, "NetBIOS")) {
+		}else if(ncase_match(name, "NetBIOS")) {
 			if(!expr_compare(userenv.nbname, value)) {
 				sblock = 1;
 			}
-		}else if(expr_compare(name, "!NetBIOS")) {
+		}else if(ncase_match(name, "!NetBIOS")) {
 			if(expr_compare(userenv.nbname, value)) {
 				sblock = 1;
 			}
-		}else if(expr_compare(name, "Username")) {
+		}else if(ncase_match(name, "Username")) {
 			if(!expr_compare(userenv.username, value)) {
 				sblock = 1;
 			}
-		}else if(expr_compare(name, "!Username")) {
+		}else if(ncase_match(name, "!Username")) {
 			if(expr_compare(userenv.username, value)) {
 				sblock = 1;
 			}
@@ -329,6 +330,23 @@ static int expr_compare(char const *str, char const *expr) {
 	}
 	
 	return 1;
+}
+
+/* Compare two strings, ignoring case
+ * Returns 1 if they match, zero otherwise.
+*/
+static int ncase_match(char const *str1, char const *str2) {
+	size_t pos = 0;
+	
+	while(tolower(str1[pos]) == tolower(str2[pos])) {
+		if(str1[pos] == '\0') {
+			return 1;
+		}
+		
+		pos++;
+	}
+	
+	return 0;
 }
 
 int main(int argc, char** argv) {
