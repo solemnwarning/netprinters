@@ -13,15 +13,17 @@ body {
 	
 	background-color: white;
 	color: black;
+	font-size: medium;
+	font-family: sans-serif;
 }
 
-h1 {
-	font-size: large;
+h1, h2 {
+	margin: 5px 0px;
+	padding: 0px;
 }
 
-li {
-	padding: 5px;
-}
+h1 { font-size: x-large; }
+h2 { font-size: large; }
 
 a {
 	color: blue;
@@ -35,11 +37,12 @@ a:hover {
 </head>
 
 <p>
-<h1>NetPrinters</h1>
+<h1>NetPrinters ReadMe</h1>
 <p>
-Copyright &copy; 2008 Daniel Collins<br>
+Version 2.1<br>
 Website: <a href="http://www.solemnwarning.net/netprinters/" target="_blank">
-http://www.solemnwarning.net/netprinters/</a>
+http://www.solemnwarning.net/netprinters/</a><br>
+Copyright &copy; 2008 Daniel Collins
 </p>
 <p>
 NetPrinters is a utility for managing networked printer connections on Windows
@@ -48,8 +51,21 @@ command line, or in a NetPrinters script which allows setting up printers based
 on filters such as username and hostname.
 </p>
 <hr>
+<h1>Contents</h1>
+<ul>
+<li><a href="#usage">Usage</a></li>
+<li><a href="#expr">Expressions</a></li>
+<li><a href="#script_0">Scripts</a>
+<ul>
+<li><a href="#script_1">Script format</a></li>
+<li><a href="#script_2">Command directives</a></li>
+<li><a href="#script_3">Filter directives</a></li>
+</ul>
+</li>
+</ul>
+<hr>
 
-<h1>Command line options</h1>
+<h1 id="usage">Usage</h1>
 <ul>
 <li>-a<br>
 Print "about" message.
@@ -75,7 +91,21 @@ Execute a NetPrinters script.
 </ul>
 <hr>
 
-<h1>Script format</h1>
+<h1 id="expr">Expressions</h1>
+<p>
+NetPrinters has a simple expression language which can be used when comparing
+strings, in its most basic usage it's just a case-insensitive string comparison
+function, but it also has support for several wildcard characters:
+</p>
+<ul>
+<li>* - Zero or more of any character</li>
+<li>? - Any single character</li>
+<li># - Any single integer</li>
+</ul>
+<hr>
+
+<h1 id="script_0">Scripts</h1>
+<h2 id="script_1">Script format</h2>
 <p>
 NetPrinters scripts are made from "blocks" of code, blocks of code contain
 control and filter directives, the control directives of a block are executed
@@ -87,9 +117,8 @@ Blocks of code are seperated by one or more blank lines, lines beginning with a
 hash (#) symbol are ignored as comments, but they will not act as block
 seperators.
 </p>
-<hr>
 
-<h1>Control directives</h1>
+<h2 id="script_2">Command directives</h2>
 <ul>
 <li>AddPrinter <i>\\SERVER\PrinterName</i><br>
 Add printer connection to an SMB printer.
@@ -103,9 +132,8 @@ expression may make use of the * and ? wildcards to represent zero or more of
 any character, or any one character respectively.
 </li>
 </ul>
-<hr>
 
-<h1>Filter directives</h1>
+<h2 id="script_3">Filter directives</h2>
 <ul>
 <li>NetBIOS <i>NetBIOS name</i><br>
 Evaluates true if the system NetBIOS name matches the supplied NetBIOS name,
