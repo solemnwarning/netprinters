@@ -33,6 +33,10 @@ a {
 a:hover {
 	color: red;
 }
+
+.pli li {
+	margin-bottom: 5px;
+}
 </style>
 </head>
 
@@ -45,10 +49,10 @@ http://www.solemnwarning.net/netprinters/</a><br>
 Copyright &copy; 2008 Daniel Collins
 </p>
 <p>
-NetPrinters is a utility for managing networked printer connections on Windows
-workstations running Windows 2000 or newer. It can be passed printers via the
-command line, or in a NetPrinters script which allows setting up printers based
-on filters such as username and hostname.
+NetPrinters is a utility for managing the networked printer connections stored
+in a user's profile on Windows workstations running Windows 2000 or newer. It
+can be passed printers via the command line, or in a NetPrinters script which
+allows setting up printers based on filters such as username and NetBIOS name.
 </p>
 <hr>
 <h1>Contents</h1>
@@ -119,39 +123,31 @@ seperators.
 </p>
 
 <h2 id="script_2">Command directives</h2>
-<ul>
+<ul class="pli">
 <li>AddPrinter <i>\\SERVER\PrinterName</i><br>
 Add printer connection to an SMB printer.
 </li>
 <li>DefaultPrinter <i>\\SERVER\PrinterName</i><br>
 Set default printer to specified SMB printer.
 </li>
-<li>DeletePrinter <i>\\SERVER\PrinterName</i><br>
-Delete any printer connections matching the supplied expression, the printer
-expression may make use of the * and ? wildcards to represent zero or more of
-any character, or any one character respectively.
+<li>DeletePrinter <i>expression</i><br>
+Delete any printer connections with UNC paths matching the supplied expression.
 </li>
 </ul>
 
 <h2 id="script_3">Filter directives</h2>
-<ul>
-<li>NetBIOS <i>NetBIOS name</i><br>
-Evaluates true if the system NetBIOS name matches the supplied NetBIOS name,
-the supplied name may use the * and ? wildcards, which have the same effect as
-documented in DeletePrinter.
+<ul class="pli">
+<li>NetBIOS <i>expression</i><br>
+Evaluates true if the system NetBIOS name matches the supplied expression.
 </li>
-<li>!NetBIOS <i>NetBIOS name</i><br>
-Evaluates true is the system NetBIOS name does NOT match the supplied NetBIOS
-name, basically the opposite of the NetBIOS directive. May also use the * and ?
-wildcards like NetBIOS can.
+<li>!NetBIOS <i>expression</i><br>
+Evaluates true is the system NetBIOS name does NOT match the supplied expression.
 </li>
-<li>Username <i>Username expression</i><br>
-Evaluates true if the current username matches the supplied username expression,
-the supplied username expression may use the * and ? wildcards.
+<li>Username <i>expression</i><br>
+Evaluates true if the current username matches the supplied expression.
 </li>
-<li>!Username <i>Username expression</i><br>
-Evaluates true if the current username does NOT match the supplied username
-expression, the supplied username expression may use the * and ? wildcards.
+<li>!Username <i>expression</i><br>
+Evaluates true if the current username does NOT match the supplied expression.
 </li>
 </ul>
 </body>
