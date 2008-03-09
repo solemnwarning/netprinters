@@ -53,10 +53,8 @@ static void connect_printer(char *printer);
 static void default_printer(char *printer);
 static void disconnect_printer(char *printer);
 static void disconnect_by_expr(char *expr);
-static void print_about(void);
 static void exec_script(char const *filename);
 static void load_env(void);
-static void print_env(void);
 static int expr_compare(char const *str, char const *expr);
 
 static struct {
@@ -201,18 +199,6 @@ static void disconnect_by_expr(char *expr) {
 	free(printers);
 }
 
-/* Print the 'about' message to stdout */
-static void print_about(void) {
-	printf("NetPrinters is free software, please share it!\n");
-	printf("Website - http://www.solemnwarning.net/netprinters/\n\n");
-	
-	printf("The release ZIP files on the website include:\n");
-	printf("\t - A compiled executable (.exe)\n");
-	printf("\t - The source code\n");
-	printf("\t - Full documentation\n");
-	printf("\t - A copy of the license\n");
-}
-
 /* Parse and execute a NetPrinters script */
 static void exec_script(char const *filename) {
 	FILE *fh = fopen(filename, "r");
@@ -298,12 +284,6 @@ static void load_env(void) {
 	GetUserName(userenv.username, &bsize);
 }
 
-/* Print environment information to stdout */
-static void print_env(void) {
-	printf("NetBIOS name:\t%s\n", userenv.nbname);
-	printf("Username:\t%s\n", userenv.username);
-}
-
 /* Compare the supplied string and expression
  * Returns 1 upon match, zero otherwise.
 */
@@ -371,13 +351,7 @@ int main(int argc, char** argv) {
 	
 	int argn = 1;
 	while(argn < argc) {
-		if(ARGN_IS("-a")) {
-			print_about();
-			return 0;
-		}else if(ARGN_IS("-e")) {
-			print_env();
-			return 0;
-		}else if(ARGN_IS("-c")) {
+		if(ARGN_IS("-c")) {
 			if((argn + 1) == argc) {
 				EPRINTF("-c requires an argument");
 				return 1;
