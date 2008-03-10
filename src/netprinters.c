@@ -238,6 +238,9 @@ static void exec_script(char const *filename) {
 			default_printer(value);
 		}else if(ncase_match(name, "DeletePrinter")) {
 			disconnect_by_expr(value);
+		}else if(ncase_match(name, "Exit")) {
+			printf("Line %u:\tExit used\n", lnum);
+			exit(0);
 		}else if(ncase_match(name, "NetBIOS")) {
 			if(!expr_compare(userenv.nbname, value)) {
 				sblock = 1;

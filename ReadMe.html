@@ -124,7 +124,7 @@ Scripts may have UNIX, Windows or even Macintosh line endings as newline and
 return-carridge characters are stripped from the beginning and end of every
 line. Whitespace is also stripped from the beginning of the line and after the
 directive name, so you can have any number of spaces or tabs at the start of a
-line, or between the directive name and it's argument(s).
+line, or between the directive name and its argument(s).
 </p>
 
 <h2 id="script_2">Command directives</h2>
@@ -137,6 +137,9 @@ Set default printer to specified SMB printer.
 </li>
 <li>DeletePrinter <i>expression</i><br>
 Delete any printer connections with UNC paths matching the supplied expression.
+</li>
+<li>Exit<br>
+Print a message to stdout and exit with status zero.
 </li>
 </ul>
 
