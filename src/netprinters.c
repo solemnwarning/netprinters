@@ -57,6 +57,7 @@ static void exec_script(char const *filename);
 static void load_env(void);
 static int expr_compare(char const *str, char const *expr);
 static int ncase_match(char const *str1, char const *str2);
+static void *allocate(unsigned int size);
 
 static struct {
 	char username[1024];
@@ -89,25 +90,16 @@ static char **get_printers(void) {
 		}
 		
 		free(printers);
-		if((printers = malloc(size)) == NULL) {
-			EPRINTF("Can't allocate %u bytes\n", (unsigned int)size);
-			goto GET_PRINTERS_END;
-		}
+		printers = allocate(size);
 	}
 	
-	if(!(retbuf = malloc(sizeof(char*) * (count+1)))) {
-		EPRINTF("Can't allocate %d bytes\n", (int)(sizeof(char*) * (count+1)));
-		goto GET_PRINTERS_END;
-	}
+	retbuf = allocate(sizeof(char*) * (count+1));
 	retbuf[count] = NULL;
 	
 	for(n = 0; n < count; n++) {
 		char *pname = printers[n].pPrinterName;
 		
-		if((retbuf[n] = malloc(strlen(pname)+1)) == NULL) {
-			EPRINTF("Can't allocate %u bytes\n", (strlen(pname)+1));
-			break;
-		}
+		retbuf[n] = allocate(strlen(pname)+1);
 		strcpy(retbuf[n], pname);
 	}
 	
@@ -410,4 +402,14 @@ int main(int argc, char** argv) {
 	}
 	
 	return 0;
+}
+
+static void *allocate(unsigned int size) {
+	void *ptr = malloc(size);
+	if(!ptr) {
+		EPRINTF("Out of memory! Failed to allocate %u bytes\n", size);
+		exit(1);
+	}
+	
+	return ptr;
 }
