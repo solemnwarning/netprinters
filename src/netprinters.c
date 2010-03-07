@@ -40,7 +40,6 @@
 #define VERSION "v2.1"
 #define WHITESPACE "\r\n\t "
 
-#define EPRINTF(...) fprintf(stderr, __VA_ARGS__)
 #define ARGN_IS(arg) (strcmp(argv[argn], arg) == 0)
 
 static void print_usage(void);
@@ -56,11 +55,16 @@ static void load_env(void);
 static int expr_compare(char const *str, char const *expr);
 static int ncase_match(char const *str1, char const *str2);
 static void *allocate(unsigned int size);
+static void show_error(const char *fmt, ...);
+static void do_exit(int status);
 
 static struct {
 	char username[1024];
 	char nbname[1024];
 } userenv = {{'\0'},{'\0'}};
+
+static int errors_pause = 0;
+static int errors_occured = 0;
 
 static void print_usage(void) {
 	printf("Usage: netprinters.exe <arguments>\n");
@@ -71,6 +75,7 @@ static void print_usage(void) {
 	printf("-r <expression>\tDelete any matching printer connections\n");
 	printf("-l\t\tList connected printers\n");
 	printf("-s <filename>\tExecute a netprinters script\n");
+	printf("-p\t\tPause before exiting if errors occur\n");
 }
 
 /* Returns a NULL-terminated list of connected printers obtained from the
@@ -83,7 +88,7 @@ static char **get_printers(void) {
 	
 	while(!EnumPrinters(PRINTER_ENUM_CONNECTIONS, NULL, 4, (void*)printers, size, &size, &count)) {
 		if(GetLastError() != 122 && GetLastError() != 1784) {
-			EPRINTF("Can't fetch printers: %s\n", win32_strerr(GetLastError()));
+			show_error("Can't fetch printers: %s", win32_strerr(GetLastError()));
 			goto GET_PRINTERS_END;
 		}
 		
@@ -139,10 +144,7 @@ static void connect_printer(char *printer) {
 	if(AddPrinterConnection((char*)printer)) {
 		printf("Added printer:\t\t%s\n", printer);
 	}else{
-		EPRINTF(
-			"Can't connect to printer %s: %s\n",
-			printer, win32_strerr(GetLastError())
-		);
+		show_error("Can't connect to printer %s: %s", printer, win32_strerr(GetLastError()));
 	}
 }
 
@@ -151,10 +153,7 @@ static void default_printer(char *printer) {
 	if(SetDefaultPrinter(printer)) {
 		printf("Set default printer:\t%s\n", printer);
 	}else{
-		EPRINTF(
-			"Can't make printer %s default: %s\n",
-			printer, win32_strerr(GetLastError())
-		);
+		show_error("Can't set printer %s as default: %s", printer, win32_strerr(GetLastError()));
 	}
 }
 
@@ -163,10 +162,7 @@ static void disconnect_printer(char *printer) {
 	if(DeletePrinterConnection(printer)) {
 		printf("Disconnected from:\t%s\n", printer);
 	}else{
-		EPRINTF(
-			"Can't disconnect from printer %s: %s\n",
-			printer, win32_strerr(GetLastError())
-		);
+		show_error("Can't disconnect from printer %s: %s", printer, win32_strerr(GetLastError()));
 	}
 }
 
@@ -192,10 +188,7 @@ static void disconnect_by_expr(char *expr) {
 static void exec_script(char const *filename) {
 	FILE *fh = fopen(filename, "r");
 	if(!fh) {
-		EPRINTF(
-			"Can't open script %s: %s\n", filename,
-			win32_strerr(GetLastError())
-		);
+		show_error("Can't open script %s: %s", filename, win32_strerr(GetLastError()));
 		return;
 	}
 	
@@ -230,7 +223,7 @@ static void exec_script(char const *filename) {
 			disconnect_by_expr(value);
 		}else if(ncase_match(name, "Exit")) {
 			printf("Line %u:\tExit used\n", lnum);
-			exit(0);
+			do_exit(0);
 		}else if(ncase_match(name, "NetBIOS")) {
 			if(!expr_compare(userenv.nbname, value)) {
 				sblock = 1;
@@ -248,21 +241,13 @@ static void exec_script(char const *filename) {
 				sblock = 1;
 			}
 		}else{
-			EPRINTF(
-				"Unknown directive %s at line %u\n",
-				name, lnum
-			);
+			show_error("Unknown directive %s at line %u", name, lnum);
 		}
 		
 		lnum++;
 	}
 	
-	if(fclose(fh) != 0) {
-		EPRINTF(
-			"Can't close script %s: %s\n", filename,
-			win32_strerr(GetLastError())
-		);
-	}
+	fclose(fh);
 }
 
 /* Read the environment information into the userenv structure */
@@ -355,7 +340,7 @@ int main(int argc, char** argv) {
 	printf("Copyright (C) 2008 Daniel Collins\n\n");
 	
     	if(LOBYTE(LOWORD(GetVersion())) < 5) {
-		EPRINTF("This program requires Windows 2000 or newer\n");
+		show_error("This program requires Windows 2000 or later");
 		return 1;
 	}
 	
@@ -365,52 +350,76 @@ int main(int argc, char** argv) {
 	while(argn < argc) {
 		if(ARGN_IS("-c")) {
 			if((argn + 1) == argc) {
-				EPRINTF("-c requires an argument");
-				return 1;
+				show_error("-c requires an argument");
+				do_exit(1);
 			}
 			
 			connect_printer(argv[++argn]);
 		}else if(ARGN_IS("-d")) {
 			if((argn + 1) == argc) {
-				EPRINTF("-d requires an argument");
-				return 1;
+				show_error("-d requires an argument");
+				do_exit(1);
 			}
 			
 			default_printer(argv[++argn]);
 		}else if(ARGN_IS("-r")) {
 			if((argn + 1) == argc) {
-				EPRINTF("-r requires an argument");
-				return 1;
+				show_error("-r requires an argument");
+				do_exit(1);
 			}
 			
 			disconnect_by_expr(argv[++argn]);
 		}else if(ARGN_IS("-l")) {
 			list_printers();
-			return 0;
+			do_exit(0);
 		}else if(ARGN_IS("-s")) {
 			if((argn + 1) == argc) {
-				EPRINTF("-s requires an argument");
-				return 1;
+				show_error("-s requires an argument");
+				do_exit(1);
 			}
 			
 			exec_script(argv[++argn]);
+		}else if(ARGN_IS("-p")) {
+			errors_pause = 1;
 		}else{
-			EPRINTF("Unknown argument: %s\n", argv[argn]);
-			return 1;
+			show_error("Unknown argument: %s", argv[argn]);
+			do_exit(1);
 		}
 		
 		argn++;
 	}
 	
+	do_exit(errors_occured);
 	return 0;
 }
 
 static void *allocate(unsigned int size) {
 	void *ptr = malloc(size);
 	if(!ptr) {
-		EPRINTF("Out of memory! Failed to allocate %u bytes\n", size);
-		exit(1);
+		show_error("Out of memory! Failed to allocate %u bytes", size);
+		do_exit(1);
 	}
 	
 	return ptr;
+}
+
+static void show_error(const char *fmt, ...) {
+	char msg[1024];
+	
+	va_list argv;
+	va_start(argv, fmt);
+	vsnprintf(msg, 1024, fmt, argv);
+	va_end(argv);
+	
+	fprintf(stderr, "%s\n", msg);
+	errors_occured = 1;
+}
+
+static void do_exit(int status) {
+	if(errors_pause && errors_occured) {
+		putchar('\n');
+		system("pause");
+	}
+	
+	exit(status);
 }
