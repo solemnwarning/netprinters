@@ -42,8 +42,6 @@
 
 #define EPRINTF(...) fprintf(stderr, __VA_ARGS__)
 #define ARGN_IS(arg) (strcmp(argv[argn], arg) == 0)
-#define fprintf(fh, ...) fprintf(fh, __VA_ARGS__); fflush(fh);
-#define printf(...) printf(__VA_ARGS__); fflush(stdout);
 
 static void print_usage(void);
 static char **get_printers(void);
@@ -345,6 +343,9 @@ static int ncase_match(char const *str1, char const *str2) {
 }
 
 int main(int argc, char** argv) {
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
+	
 	if(argc < 2) {
 		print_usage();
 		return 1;
